@@ -4,9 +4,9 @@ import logging
 
 from aiogram import Router, F
 from aiogram.filters import Command, CommandStart
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
-from duas import DUAS
+from duas import DUAS, MORNING_ADHKAR, EVENING_ADHKAR, AFTER_PRAYER_DUAS
 from storage import (
     add_subscriber,
     remove_subscriber,
@@ -15,12 +15,36 @@ from storage import (
     set_subscriber_time,
     get_all_subscribers,
 )
-from scheduler import reschedule_user, remove_user_schedule, send_daily_dua
+from scheduler import reschedule_user, remove_user_schedule
 
 logger = logging.getLogger(__name__)
 router = Router()
 
 ADMIN_ID = 6462821940
+
+
+def main_menu() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🌅 Утренние азкары", callback_data="cat_morning"),
+            InlineKeyboardButton(text="🌆 Вечерние азкары", callback_data="cat_evening"),
+        ],
+        [
+            InlineKeyboardButton(text="🕌 Дуа после намаза", callback_data="cat_after_prayer"),
+            InlineKeyboardButton(text="🎲 Случайная дуа", callback_data="cat_random"),
+        ],
+    ])
+
+
+def format_dua(dua: dict, heading: str = "🌙 Дуа для тебя") -> str:
+    return (
+        f"{heading}\n\n"
+        f"*{dua['title']}*\n\n"
+        f"*Арабский:*\n{dua['arabic']}\n\n"
+        f"*Транслитерация:*\n_{dua['transliteration']}_\n\n"
+        f"*Перевод:*\n{dua['translation']}\n\n"
+        f"📖 Источник: {dua['source']}"
+    )
 
 
 @router.message(CommandStart())
@@ -33,6 +57,7 @@ async def cmd_start(message: Message):
         "/unsubscribe — Отписаться от напоминаний\n"
         "/settime — Установить время отправки (UTC)\n"
         "/dua — Получить случайную дуа прямо сейчас\n"
+        "/adhkar — Азкары и дуа по категориям\n"
         "/status — Проверить статус подписки\n"
         "/help — Показать это сообщение снова\n\n"
         "Используй /subscribe, чтобы начать 🤲",
@@ -49,10 +74,65 @@ async def cmd_help(message: Message):
         "/unsubscribe — Отписаться от напоминаний\n"
         "/settime — Установить время отправки (UTC)\n"
         "/dua — Получить случайную дуа прямо сейчас\n"
+        "/adhkar — Азкары и дуа по категориям\n"
         "/status — Проверить статус подписки\n"
         "/help — Показать это сообщение",
         parse_mode="Markdown",
     )
+
+
+@router.message(Command("adhkar"))
+async def cmd_adhkar(message: Message):
+    await message.answer(
+        "📿 *Азкары и дуа*\n\nВыбери категорию:",
+        parse_mode="Markdown",
+        reply_markup=main_menu(),
+    )
+
+
+@router.callback_query(F.data == "cat_morning")
+async def cb_morning(callback: CallbackQuery):
+    dua = random.choice(MORNING_ADHKAR)
+    await callback.message.answer(
+        format_dua(dua, "🌅 *Утренний азкар*"),
+        parse_mode="Markdown",
+        reply_markup=main_menu(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "cat_evening")
+async def cb_evening(callback: CallbackQuery):
+    dua = random.choice(EVENING_ADHKAR)
+    await callback.message.answer(
+        format_dua(dua, "🌆 *Вечерний азкар*"),
+        parse_mode="Markdown",
+        reply_markup=main_menu(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "cat_after_prayer")
+async def cb_after_prayer(callback: CallbackQuery):
+    dua = random.choice(AFTER_PRAYER_DUAS)
+    await callback.message.answer(
+        format_dua(dua, "🕌 *Дуа после намаза*"),
+        parse_mode="Markdown",
+        reply_markup=main_menu(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "cat_random")
+async def cb_random(callback: CallbackQuery):
+    all_duas = DUAS + MORNING_ADHKAR + EVENING_ADHKAR + AFTER_PRAYER_DUAS
+    dua = random.choice(all_duas)
+    await callback.message.answer(
+        format_dua(dua, "🎲 *Случайная дуа*"),
+        parse_mode="Markdown",
+        reply_markup=main_menu(),
+    )
+    await callback.answer()
 
 
 @router.message(Command("subscribe"))
@@ -152,13 +232,9 @@ async def cmd_settime(message: Message, scheduler, bot):
 async def cmd_dua(message: Message):
     dua = random.choice(DUAS)
     await message.answer(
-        f"🌙 *Дуа для тебя*\n\n"
-        f"*{dua['title']}*\n\n"
-        f"*Арабский:*\n{dua['arabic']}\n\n"
-        f"*Транслитерация:*\n_{dua['transliteration']}_\n\n"
-        f"*Перевод:*\n{dua['translation']}\n\n"
-        f"📖 Источник: {dua['source']}",
+        format_dua(dua),
         parse_mode="Markdown",
+        reply_markup=main_menu(),
     )
 
 
