@@ -92,35 +92,59 @@ async def cmd_adhkar(message: Message):
 
 @router.callback_query(F.data == "cat_morning")
 async def cb_morning(callback: CallbackQuery):
-    dua = random.choice(MORNING_ADHKAR)
-    await callback.message.answer(
-        format_dua(dua, "🌅 *Утренний азкар*"),
-        parse_mode="Markdown",
-        reply_markup=main_menu(),
-    )
     await callback.answer()
+    await callback.message.answer(
+        f"🌅 *Утренние азкары*\n\nЧитаются после намаза фаджр (утреннего намаза). Всего {len(MORNING_ADHKAR)} азкаров:",
+        parse_mode="Markdown",
+    )
+    for i, dua in enumerate(MORNING_ADHKAR, 1):
+        text = (
+            f"🌅 *{i}/{len(MORNING_ADHKAR)} — {dua['title']}*\n\n"
+            f"{dua['arabic']}\n\n"
+            f"*Транслитерация:*\n_{dua['transliteration']}_\n\n"
+            f"*Перевод:*\n{dua['translation']}\n\n"
+            f"📖 {dua['source']}"
+        )
+        await callback.message.answer(text, parse_mode="Markdown")
+    await callback.message.answer("✅ Все утренние азкары прочитаны. Джазакумуллаху хайран! 🤲", reply_markup=main_menu())
 
 
 @router.callback_query(F.data == "cat_evening")
 async def cb_evening(callback: CallbackQuery):
-    dua = random.choice(EVENING_ADHKAR)
-    await callback.message.answer(
-        format_dua(dua, "🌆 *Вечерний азкар*"),
-        parse_mode="Markdown",
-        reply_markup=main_menu(),
-    )
     await callback.answer()
+    await callback.message.answer(
+        f"🌆 *Вечерние азкары*\n\nЧитаются после намаза аср или магриб. Всего {len(EVENING_ADHKAR)} азкаров:",
+        parse_mode="Markdown",
+    )
+    for i, dua in enumerate(EVENING_ADHKAR, 1):
+        text = (
+            f"🌆 *{i}/{len(EVENING_ADHKAR)} — {dua['title']}*\n\n"
+            f"{dua['arabic']}\n\n"
+            f"*Транслитерация:*\n_{dua['transliteration']}_\n\n"
+            f"*Перевод:*\n{dua['translation']}\n\n"
+            f"📖 {dua['source']}"
+        )
+        await callback.message.answer(text, parse_mode="Markdown")
+    await callback.message.answer("✅ Все вечерние азкары прочитаны. Джазакумуллаху хайран! 🤲", reply_markup=main_menu())
 
 
 @router.callback_query(F.data == "cat_after_prayer")
 async def cb_after_prayer(callback: CallbackQuery):
-    dua = random.choice(AFTER_PRAYER_DUAS)
-    await callback.message.answer(
-        format_dua(dua, "🕌 *Дуа после намаза*"),
-        parse_mode="Markdown",
-        reply_markup=main_menu(),
-    )
     await callback.answer()
+    await callback.message.answer(
+        f"🕌 *Дуа после намаза*\n\nЧитаются сразу после завершения каждого намаза. Всего {len(AFTER_PRAYER_DUAS)} дуа:",
+        parse_mode="Markdown",
+    )
+    for i, dua in enumerate(AFTER_PRAYER_DUAS, 1):
+        text = (
+            f"🕌 *{i}/{len(AFTER_PRAYER_DUAS)} — {dua['title']}*\n\n"
+            f"{dua['arabic']}\n\n"
+            f"*Транслитерация:*\n_{dua['transliteration']}_\n\n"
+            f"*Перевод:*\n{dua['translation']}\n\n"
+            f"📖 {dua['source']}"
+        )
+        await callback.message.answer(text, parse_mode="Markdown")
+    await callback.message.answer("✅ Все дуа после намаза. Да примет Аллах ваш намаз! 🤲", reply_markup=main_menu())
 
 
 @router.callback_query(F.data == "cat_random")
