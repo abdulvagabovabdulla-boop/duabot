@@ -5,6 +5,7 @@ import os
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
+from aiogram.types import BotCommand
 
 from handlers import router
 from scheduler import create_scheduler, load_all_schedules
@@ -31,6 +32,16 @@ async def main():
     await load_all_schedules(scheduler, bot)
     scheduler.start()
     logger.info("Scheduler started")
+
+    await bot.set_my_commands([
+        BotCommand(command="subscribe", description="Подписаться на ежедневные дуа"),
+        BotCommand(command="unsubscribe", description="Отписаться от напоминаний"),
+        BotCommand(command="settime", description="Установить время отправки (UTC)"),
+        BotCommand(command="dua", description="Получить случайную дуа прямо сейчас"),
+        BotCommand(command="status", description="Проверить статус подписки"),
+        BotCommand(command="help", description="Список команд"),
+    ])
+    logger.info("Bot commands menu set")
 
     dp.include_router(router)
 
