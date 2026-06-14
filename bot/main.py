@@ -38,6 +38,7 @@ async def main():
         BotCommand(command="unsubscribe", description="Отписаться от напоминаний"),
         BotCommand(command="settime", description="Установить время отправки (UTC)"),
         BotCommand(command="dua", description="Получить случайную дуа прямо сейчас"),
+        BotCommand(command="adhkar", description="Азкары и дуа по категориям"),
         BotCommand(command="status", description="Проверить статус подписки"),
         BotCommand(command="help", description="Список команд"),
     ])
