@@ -14,6 +14,7 @@ from storage import (
     get_subscriber_time,
     set_subscriber_time,
     get_all_subscribers,
+    get_stats,
 )
 from scheduler import reschedule_user, remove_user_schedule
 
@@ -288,10 +289,28 @@ async def cmd_users(message: Message):
         await message.answer("❌ У тебя нет доступа к этой команде.")
         return
 
-    subscribers = await get_all_subscribers()
-    count = len(subscribers)
+    stats = await get_stats()
+    total = stats["total"]
+    today = stats["today"]
+    yesterday = stats["yesterday"]
+    week = stats["week"]
+
+    today_pct = round(today / total * 100, 1) if total else 0
+    yesterday_pct = round(yesterday / total * 100, 1) if total else 0
+    week_pct = round(week / total * 100, 1) if total else 0
+
+    def bar(pct: float) -> str:
+        filled = round(pct / 10)
+        return "█" * filled + "░" * (10 - filled) + f" {pct}%"
+
     await message.answer(
-        f"👥 *Статистика пользователей*\n\n"
-        f"Зарегистрировано подписчиков: *{count}*",
+        f"👥 *Статистика подписчиков*\n\n"
+        f"📊 Всего: *{total}* чел.\n\n"
+        f"📅 Сегодня: *+{today}*\n"
+        f"`{bar(today_pct)}`\n\n"
+        f"📅 Вчера: *+{yesterday}*\n"
+        f"`{bar(yesterday_pct)}`\n\n"
+        f"📅 За 7 дней: *+{week}*\n"
+        f"`{bar(week_pct)}`",
         parse_mode="Markdown",
     )
