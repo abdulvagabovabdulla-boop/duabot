@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Optional
+from datetime import datetime, timezone, timedelta
 
 STORAGE_FILE = os.path.join(os.path.dirname(__file__), "subscribers.json")
 DEFAULT_TIME = "07:00"
@@ -23,7 +23,13 @@ def _save(data: dict):
 
 async def add_subscriber(chat_id: int, time_str: str = DEFAULT_TIME):
     data = _load()
-    data[str(chat_id)] = {"time": time_str}
+    if str(chat_id) not in data:
+        data[str(chat_id)] = {
+            "time": time_str,
+            "joined_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        }
+    else:
+        data[str(chat_id)]["time"] = time_str
     _save(data)
 
 
@@ -55,3 +61,27 @@ async def set_subscriber_time(chat_id: int, time_str: str):
 async def get_all_subscribers() -> list[tuple[int, str]]:
     data = _load()
     return [(int(cid), info.get("time", DEFAULT_TIME)) for cid, info in data.items()]
+
+
+async def get_stats() -> dict:
+    data = _load()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    total = len(data)
+    joined_today = sum(1 for info in data.values() if info.get("joined_at") == today)
+    joined_yesterday = sum(1 for info in data.values() if info.get("joined_at") == yesterday)
+
+    # Last 7 days
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+    joined_week = sum(
+        1 for info in data.values()
+        if info.get("joined_at", "0000-00-00") >= week_ago
+    )
+
+    return {
+        "total": total,
+        "today": joined_today,
+        "yesterday": joined_yesterday,
+        "week": joined_week,
+    }
