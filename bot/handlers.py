@@ -6,7 +6,7 @@ from aiogram import Router, F
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
-from duas import DUAS, MORNING_ADHKAR, EVENING_ADHKAR, AFTER_PRAYER_DUAS, get_dua_of_day
+from duas import DUAS, MORNING_ADHKAR, EVENING_ADHKAR, AFTER_PRAYER_DUAS, get_dua_of_day, search_duas
 from storage import (
     add_subscriber,
     remove_subscriber,
@@ -62,6 +62,7 @@ async def cmd_start(message: Message):
         "/duaofday — ☀️ Дуа дня\n"
         "/duaoff — 🔕 Отключить дуа дня\n"
         "/duaon — 🔔 Включить дуа дня\n"
+        "/search — 🔍 Поиск дуа по слову\n"
         "/dua — Получить случайную дуа прямо сейчас\n"
         "/adhkar — Азкары и дуа по категориям\n"
         "/status — Проверить статус подписки\n"
@@ -82,6 +83,7 @@ async def cmd_help(message: Message):
         "/duaofday — ☀️ Дуа дня\n"
         "/duaoff — 🔕 Отключить дуа дня\n"
         "/duaon — 🔔 Включить дуа дня\n"
+        "/search — 🔍 Поиск дуа по слову\n"
         "/dua — Получить случайную дуа прямо сейчас\n"
         "/adhkar — Азкары и дуа по категориям\n"
         "/status — Проверить статус подписки\n"
@@ -306,6 +308,57 @@ async def cmd_settime(message: Message, scheduler, bot):
         "Подписка активна — ежедневная дуа будет приходить в указанное время.",
         parse_mode="Markdown",
     )
+
+
+@router.message(Command("search"))
+async def cmd_search(message: Message):
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2 or not args[1].strip():
+        await message.answer(
+            "🔍 *Поиск дуа*\n\n"
+            "Напиши слово после команды:\n"
+            "`/search никах`\n"
+            "`/search здоровье`\n"
+            "`/search сон`\n"
+            "`/search экзамен`\n"
+            "`/search еда`\n"
+            "`/search защита`",
+            parse_mode="Markdown",
+        )
+        return
+
+    query = args[1].strip()
+    results = search_duas(query)
+
+    if not results:
+        await message.answer(
+            f"😔 По запросу *«{query}»* ничего не найдено.\n\n"
+            "Попробуй другое слово, например:\n"
+            "`/search сон` · `/search здоровье` · `/search никах`\n"
+            "`/search еда` · `/search экзамен` · `/search защита`",
+            parse_mode="Markdown",
+        )
+        return
+
+    await message.answer(
+        f"🔍 По запросу *«{query}»* найдено *{len(results)}* дуа:",
+        parse_mode="Markdown",
+    )
+    for dua in results[:5]:
+        text = (
+            f"*{dua['title']}*\n\n"
+            f"{dua['arabic']}\n\n"
+            f"*Транслитерация:*\n_{dua['transliteration']}_\n\n"
+            f"*Перевод:*\n{dua['translation']}\n\n"
+            f"📖 {dua['source']}"
+        )
+        await message.answer(text, parse_mode="Markdown")
+
+    if len(results) > 5:
+        await message.answer(
+            f"_Показаны первые 5 из {len(results)}. Уточни запрос для более точного результата._",
+            parse_mode="Markdown",
+        )
 
 
 @router.message(Command("dua"))
