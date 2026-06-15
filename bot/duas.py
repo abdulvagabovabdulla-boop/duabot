@@ -316,3 +316,9 @@ AFTER_PRAYER_DUAS = [
         "source": "Сахих аль-Бухари — читать после намаза"
     },
 ]
+
+
+def get_dua_of_day() -> dict:
+    from datetime import datetime, timezone
+    day_of_year = datetime.now(timezone.utc).timetuple().tm_yday
+    return DUAS[day_of_year % len(DUAS)]
