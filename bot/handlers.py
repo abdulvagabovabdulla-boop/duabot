@@ -6,7 +6,7 @@ from aiogram import Router, F
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
-from duas import DUAS, MORNING_ADHKAR, EVENING_ADHKAR, AFTER_PRAYER_DUAS
+from duas import DUAS, MORNING_ADHKAR, EVENING_ADHKAR, AFTER_PRAYER_DUAS, get_dua_of_day
 from storage import (
     add_subscriber,
     remove_subscriber,
@@ -57,6 +57,7 @@ async def cmd_start(message: Message):
         "/subscribe — Подписаться на ежедневные дуа\n"
         "/unsubscribe — Отписаться от напоминаний\n"
         "/settime — Установить время отправки (UTC)\n"
+        "/duaofday — ☀️ Дуа дня\n"
         "/dua — Получить случайную дуа прямо сейчас\n"
         "/adhkar — Азкары и дуа по категориям\n"
         "/status — Проверить статус подписки\n"
@@ -74,12 +75,29 @@ async def cmd_help(message: Message):
         "/subscribe — Подписаться на ежедневные дуа\n"
         "/unsubscribe — Отписаться от напоминаний\n"
         "/settime — Установить время отправки (UTC)\n"
+        "/duaofday — ☀️ Дуа дня\n"
         "/dua — Получить случайную дуа прямо сейчас\n"
         "/adhkar — Азкары и дуа по категориям\n"
         "/status — Проверить статус подписки\n"
         "/help — Показать это сообщение",
         parse_mode="Markdown",
     )
+
+
+@router.message(Command("duaofday"))
+async def cmd_dua_of_day(message: Message):
+    from datetime import datetime, timezone
+    dua = get_dua_of_day()
+    date_str = datetime.now(timezone.utc).strftime("%d.%m.%Y")
+    text = (
+        f"☀️ *Дуа дня — {date_str}*\n\n"
+        f"*{dua['title']}*\n\n"
+        f"{dua['arabic']}\n\n"
+        f"*Транслитерация:*\n_{dua['transliteration']}_\n\n"
+        f"*Перевод:*\n{dua['translation']}\n\n"
+        f"📖 {dua['source']}"
+    )
+    await message.answer(text, parse_mode="Markdown")
 
 
 @router.message(Command("adhkar"))
