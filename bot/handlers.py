@@ -15,6 +15,8 @@ from storage import (
     set_subscriber_time,
     get_all_subscribers,
     get_stats,
+    get_dua_enabled,
+    set_dua_enabled,
 )
 from scheduler import reschedule_user, remove_user_schedule
 
@@ -58,6 +60,8 @@ async def cmd_start(message: Message):
         "/unsubscribe — Отписаться от напоминаний\n"
         "/settime — Установить время отправки (UTC)\n"
         "/duaofday — ☀️ Дуа дня\n"
+        "/duaoff — 🔕 Отключить дуа дня\n"
+        "/duaon — 🔔 Включить дуа дня\n"
         "/dua — Получить случайную дуа прямо сейчас\n"
         "/adhkar — Азкары и дуа по категориям\n"
         "/status — Проверить статус подписки\n"
@@ -76,10 +80,43 @@ async def cmd_help(message: Message):
         "/unsubscribe — Отписаться от напоминаний\n"
         "/settime — Установить время отправки (UTC)\n"
         "/duaofday — ☀️ Дуа дня\n"
+        "/duaoff — 🔕 Отключить дуа дня\n"
+        "/duaon — 🔔 Включить дуа дня\n"
         "/dua — Получить случайную дуа прямо сейчас\n"
         "/adhkar — Азкары и дуа по категориям\n"
         "/status — Проверить статус подписки\n"
         "/help — Показать это сообщение",
+        parse_mode="Markdown",
+    )
+
+
+@router.message(Command("duaoff"))
+async def cmd_dua_off(message: Message):
+    chat_id = message.chat.id
+    if not await is_subscribed(chat_id):
+        await message.answer("❌ Сначала подпишись с помощью /subscribe.")
+        return
+    await set_dua_enabled(chat_id, False)
+    await message.answer(
+        "🔕 *Дуа дня отключена.*\n\n"
+        "Ежедневные напоминания больше не будут приходить.\n"
+        "Включить снова — /duaon",
+        parse_mode="Markdown",
+    )
+
+
+@router.message(Command("duaon"))
+async def cmd_dua_on(message: Message):
+    chat_id = message.chat.id
+    if not await is_subscribed(chat_id):
+        await message.answer("❌ Сначала подпишись с помощью /subscribe.")
+        return
+    await set_dua_enabled(chat_id, True)
+    time_str = await get_subscriber_time(chat_id)
+    await message.answer(
+        "🔔 *Дуа дня включена!*\n\n"
+        f"Каждый день в *{time_str} UTC* будет приходить тихое напоминание с дуа. 🤲\n"
+        "Отключить — /duaoff",
         parse_mode="Markdown",
     )
 
