@@ -1,25 +1,24 @@
 import logging
-import random
 from datetime import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from duas import DUAS
+from duas import get_dua_of_day
 from storage import get_all_subscribers, get_subscriber_time
 
 logger = logging.getLogger(__name__)
 
 
 async def send_daily_dua(bot, chat_id: int):
-    dua = random.choice(DUAS)
+    dua = get_dua_of_day()
     text = (
-        f"🌙 *Daily Dua Reminder*\n\n"
+        f"☀️ *Дуа дня*\n\n"
         f"*{dua['title']}*\n\n"
-        f"*Arabic:*\n{dua['arabic']}\n\n"
-        f"*Transliteration:*\n_{dua['transliteration']}_\n\n"
-        f"*Translation:*\n{dua['translation']}\n\n"
-        f"📖 Source: {dua['source']}"
+        f"{dua['arabic']}\n\n"
+        f"*Транслитерация:*\n_{dua['transliteration']}_\n\n"
+        f"*Перевод:*\n{dua['translation']}\n\n"
+        f"📖 {dua['source']}"
     )
     try:
         await bot.send_message(chat_id=chat_id, text=text, parse_mode="Markdown")
