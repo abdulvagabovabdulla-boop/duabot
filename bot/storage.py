@@ -27,9 +27,12 @@ async def add_subscriber(chat_id: int, time_str: str = DEFAULT_TIME):
         data[str(chat_id)] = {
             "time": time_str,
             "joined_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "dua_enabled": True,
         }
     else:
         data[str(chat_id)]["time"] = time_str
+        if "dua_enabled" not in data[str(chat_id)]:
+            data[str(chat_id)]["dua_enabled"] = True
     _save(data)
 
 
@@ -58,6 +61,20 @@ async def set_subscriber_time(chat_id: int, time_str: str):
     _save(data)
 
 
+async def get_dua_enabled(chat_id: int) -> bool:
+    data = _load()
+    entry = data.get(str(chat_id), {})
+    return entry.get("dua_enabled", True)
+
+
+async def set_dua_enabled(chat_id: int, enabled: bool):
+    data = _load()
+    if str(chat_id) not in data:
+        data[str(chat_id)] = {}
+    data[str(chat_id)]["dua_enabled"] = enabled
+    _save(data)
+
+
 async def get_all_subscribers() -> list[tuple[int, str]]:
     data = _load()
     return [(int(cid), info.get("time", DEFAULT_TIME)) for cid, info in data.items()]
@@ -72,7 +89,6 @@ async def get_stats() -> dict:
     joined_today = sum(1 for info in data.values() if info.get("joined_at") == today)
     joined_yesterday = sum(1 for info in data.values() if info.get("joined_at") == yesterday)
 
-    # Last 7 days
     week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
     joined_week = sum(
         1 for info in data.values()
